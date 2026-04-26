@@ -1,0 +1,270 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.cw{max-width:320px;margin:1rem auto;font-family:var(--font-sans);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px;background:var(--color-background-primary)}
+.display{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:8px 12px;margin-bottom:8px;min-height:96px;cursor:pointer;user-select:none;overflow:hidden;position:relative}
+.copy-btn{position:absolute;top:7px;left:8px;background:none;border:none;cursor:pointer;color:var(--color-text-secondary);padding:2px;display:flex;align-items:center;border-radius:4px}
+.copy-btn:hover{color:var(--color-text-primary);background:rgba(0,0,0,0.06)}
+.expr-line{font-size:11px;color:var(--color-text-secondary);min-height:15px;word-break:break-all;text-align:right;margin-bottom:4px}
+.val-wrap{min-height:60px;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:2px;font-size:28px;font-weight:500;color:var(--color-text-primary)}
+.tok-frac{display:inline-flex;flex-direction:column;align-items:center;gap:1px;vertical-align:middle;margin:0 2px}
+.tok-frac .fn,.tok-frac .fd{font-size:15px;line-height:1.2;padding:0 3px;border-radius:3px;min-width:16px;text-align:center}
+.tok-frac .fb{height:1.5px;background:currentColor;width:100%;min-width:20px}
+.tok-frac.frac-big .fn,.tok-frac.frac-big .fd{font-size:21px;padding:1px 5px}
+.tok-frac.frac-big .fb{min-width:28px}
+.fn.hi,.fd.hi{outline:1.5px solid var(--color-border-info);color:var(--color-text-info)}
+.tok-sqrt{display:inline-flex;align-items:flex-end;vertical-align:middle;margin:0 1px}
+.tok-sqrt .ss{font-size:20px;line-height:1}
+.tok-sqrt .si{font-size:17px;border-top:1.5px solid currentColor;padding:0 3px 0 2px;line-height:1.3;min-width:10px}
+.si.hi{outline:1.5px solid var(--color-border-info);color:var(--color-text-info)}
+.tok-pow sup{font-size:13px;line-height:0;vertical-align:super}
+.tok-pow sup.hi{color:var(--color-text-info);outline:1.5px solid var(--color-border-info);border-radius:2px}
+.cur{display:inline-block;width:1.5px;height:0.85em;background:var(--color-text-primary);vertical-align:middle;animation:blink 1s step-end infinite;margin:0 1px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nav-row{display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:7px}
+.arrbtn{height:26px;width:32px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.arrbtn:hover{background:var(--color-background-secondary)}
+.arrbtn.active-arr{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.navextra{height:26px;border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 7px}
+.navextra:hover{color:var(--color-text-primary);background:var(--color-background-secondary)}
+.nav-sep{width:1px;height:18px;background:var(--color-border-tertiary);margin:0 1px}
+
+/*
+  5 cols, GAP=5px, row height=48px
+  Layout:
+  R1: AC   DEL   √    x□   x²
+  R2: a/b  (     )    ÷[c2]         ← ÷ spans cols 4-5
+  R3: 7    8     9    ×[c2]         ← × spans cols 4-5
+  R4: 4    5     6    +[r2,c1]  −[r2,c1]  ← + col4 r4-5, − col5 r4-5
+  R5: 1    2     3    (+ cont)  (− cont)
+  R6: 0[c2]      .    =[c2]         ← = spans cols 4-5
+*/
+.grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  grid-auto-rows:48px;
+  gap:5px;
+}
+.btn{
+  border:0.5px solid var(--color-border-tertiary);
+  border-radius:8px;
+  background:var(--color-background-primary);
+  color:var(--color-text-primary);
+  font-size:15px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.1s;
+  padding:0;width:100%;height:100%;
+}
+.btn:hover{background:var(--color-background-secondary)}
+.btn:active{transform:scale(0.96)}
+.btn.op{background:var(--color-background-secondary)}
+.btn.clr{background:var(--color-background-danger);color:var(--color-text-danger);border-color:var(--color-border-danger);font-weight:500}
+.btn.del-btn{background:var(--color-background-warning);color:var(--color-text-warning);border-color:var(--color-border-warning)}
+.btn.opr{background:var(--color-background-secondary);font-size:17px}
+.btn.eq{background:#3B6D11;color:#EAF3DE;border:none;font-weight:500;font-size:20px}
+.btn.eq:hover{background:#27500A}
+.btn.armed{background:#185FA5;color:#E6F1FB;border-color:#0C447C}
+.xl{display:inline-flex;align-items:flex-start;gap:1px;line-height:1}
+.xl sup{font-size:9px;line-height:12px;margin-top:1px}
+</style>
+
+<div class="cw">
+  <div class="display" id="display" onclick="displayClick(event)">
+    <button class="copy-btn" id="copy-btn" onclick="copyVal(event)" title="copy">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="4" y="4" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.1"/>
+        <path d="M1 10V1h9" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <div class="expr-line" id="expr"></div>
+    <div class="val-wrap" id="valarea"></div>
+  </div>
+
+  <div class="nav-row">
+    <button class="arrbtn" onclick="navLeft()">&#8592;</button>
+    <div class="nav-sep"></div>
+    <button class="arrbtn" id="arr-top" onclick="navUp()">&#8593;</button>
+    <button class="arrbtn" id="arr-bot" onclick="navDown()">&#8595;</button>
+    <div class="nav-sep"></div>
+    <button class="arrbtn" onclick="navRight()">&#8594;</button>
+    <div class="nav-sep"></div>
+    <button class="navextra" onclick="navBack()">
+      <svg width="13" height="11" viewBox="0 0 13 11" fill="none"><polygon points="5,0 0,5.5 5,11" fill="currentColor"/><rect x="4" y="4" width="9" height="3" rx="1" fill="currentColor"/></svg>
+      back
+    </button>
+  </div>
+
+  <div class="grid">
+    <!-- R1: AC  DEL  √  x□  x² -->
+    <button class="btn clr"    onclick="ac()">AC</button>
+    <button class="btn del-btn" onclick="delToken()">⌫</button>
+    <button class="btn op" id="sqrt-btn" onclick="toggleSqrt()">&#8730;</button>
+    <button class="btn op" id="xpow-btn" onclick="toggleXPow()"><span class="xl">x<sup>&#9633;</sup></span></button>
+    <button class="btn op" onclick="typeQuick('2')"><span class="xl">x<sup>2</sup></span></button>
+
+    <!-- R2: a/b  (  )  ÷ [spans cols 4-5] -->
+    <button class="btn op" onclick="insertFrac()">
+      <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
+        <rect x="2" y="1" width="8" height="7" rx="1.2" stroke="currentColor" stroke-width="1.2"/>
+        <line x1="1" y1="11" x2="25" y2="11" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="16" y="14" width="8" height="7" rx="1.2" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+    </button>
+    <button class="btn op" onclick="typeChar('(')">(</button>
+    <button class="btn op" onclick="typeChar(')')">)</button>
+    <!-- ÷ wide: cols 4-5, row 2 -->
+    <button class="btn opr" style="grid-column:4/6;grid-row:2" onclick="typeOp('\u00f7')">&divide;</button>
+
+    <!-- R3: 7  8  9  × [spans cols 4-5] -->
+    <button class="btn" onclick="typeDigit('7')">7</button>
+    <button class="btn" onclick="typeDigit('8')">8</button>
+    <button class="btn" onclick="typeDigit('9')">9</button>
+    <!-- × wide: cols 4-5, row 3 -->
+    <button class="btn opr" style="grid-column:4/6;grid-row:3" onclick="typeOp('\u00d7')">&times;</button>
+
+    <!-- R4-5: 4 5 6 then 1 2 3  |  + tall col4 rows 4-5  |  − tall col5 rows 4-5 -->
+    <button class="btn" onclick="typeDigit('4')">4</button>
+    <button class="btn" onclick="typeDigit('5')">5</button>
+    <button class="btn" onclick="typeDigit('6')">6</button>
+    <!-- + tall: col4, rows 4-5 -->
+    <button class="btn opr" style="grid-column:4;grid-row:4/6" onclick="typeOp('+')">+</button>
+    <!-- − tall: col5, rows 4-5 -->
+    <button class="btn opr" style="grid-column:5;grid-row:4/6" onclick="typeOp('\u2212')">&minus;</button>
+
+    <!-- R5 cols 1-3: 1 2 3 (cols 4-5 occupied by +/−) -->
+    <button class="btn" onclick="typeDigit('1')">1</button>
+    <button class="btn" onclick="typeDigit('2')">2</button>
+    <button class="btn" onclick="typeDigit('3')">3</button>
+
+    <!-- R6: 0[c1-2]  .[c3]  =[c4-5] -->
+    <button class="btn" style="grid-column:1/3;grid-row:6" onclick="typeDigit('0')">0</button>
+    <button class="btn" style="grid-column:3;grid-row:6" onclick="typeDigit('.')">.</button>
+    <button class="btn eq" style="grid-column:4/6;grid-row:6" onclick="calculate()">=</button>
+  </div>
+</div>
+
+<script>
+let T=[],cur=0,xPowArmed=false,sqrtArmed=false,lastResult=false;
+function mkN(v){return{t:'n',v};}function mkO(v){return{t:'o',v};}function mkB(v){return{t:'b',v};}
+function mkF(){return{t:'f',top:'',bot:'',foc:'top'};}function mkS(){return{t:'s',inner:''};}function mkP(e){return{t:'p',exp:e??''};}
+function setArm(id,on){document.getElementById(id).classList.toggle('armed',on);}
+function disarm(){xPowArmed=false;sqrtArmed=false;setArm('xpow-btn',false);setArm('sqrt-btn',false);}
+function inside(){if(cur>0){let t=T[cur-1];if(t.t==='f'||t.t==='s'||t.t==='p')return t;}return null;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function setExpr(s){document.getElementById('expr').textContent=s;}
+
+function render(){
+  let html='';
+  for(let i=0;i<T.length;i++){
+    let t=T[i],at=(i===cur-1);
+    if(i===cur)html+='<span class="cur"></span>';
+    if(t.t==='n'||t.t==='o'||t.t==='b'){html+='<span>'+esc(t.v)+'</span>';}
+    else if(t.t==='f'){
+      let big=at?' frac-big':'',th=at&&t.foc==='top'?' hi':'',bh=at&&t.foc==='bot'?' hi':'';
+      html+='<span class="tok-frac'+big+'" data-i="'+i+'">'+'<span class="fn'+th+'">'+(t.top||'□')+'</span>'+'<span class="fb"></span>'+'<span class="fd'+bh+'">'+(t.bot||'□')+'</span>'+'</span>';
+    } else if(t.t==='s'){
+      let ih=at?' hi':'';
+      html+='<span class="tok-sqrt"><span class="ss">√</span><span class="si'+ih+'">'+(t.inner||'□')+'</span></span>';
+    } else if(t.t==='p'){
+      let ph=at?' hi':'';
+      html+='<span class="tok-pow"><sup class="'+ph+'">'+(t.exp||'□')+'</sup></span>';
+    }
+  }
+  if(cur===T.length)html+='<span class="cur"></span>';
+  document.getElementById('valarea').innerHTML=html||'<span style="color:var(--color-text-secondary)">0</span>';
+  document.querySelectorAll('[data-i]').forEach(el=>{
+    el.addEventListener('click',e=>{
+      e.stopPropagation();let i=parseInt(el.dataset.i);cur=i+1;
+      let r=el.getBoundingClientRect();T[i].foc=e.clientY<r.top+r.height/2?'top':'bot';render();
+    });
+  });
+  let ins=inside();
+  document.getElementById('arr-top').classList.toggle('active-arr',!!(ins&&ins.t==='f'&&ins.foc==='top'));
+  document.getElementById('arr-bot').classList.toggle('active-arr',!!(ins&&ins.t==='f'&&ins.foc==='bot'));
+}
+
+function insAt(tok){T.splice(cur,0,tok);cur++;}
+function typeDigit(v){
+  if(lastResult){T=[];cur=0;lastResult=false;setExpr('');}
+  let it=inside();
+  if(it){
+    if(it.t==='f'){if(it.foc==='top')it.top+=v;else it.bot+=v;}
+    else if(it.t==='s')it.inner+=v;
+    else if(it.t==='p')it.exp+=v;
+    render();return;
+  }
+  if(xPowArmed){insAt(mkP(v));disarm();render();return;}
+  if(sqrtArmed){let s=mkS();s.inner=v;insAt(s);disarm();render();return;}
+  if(cur>0&&T[cur-1].t==='n')T[cur-1].v+=v;else insAt(mkN(v));
+  render();
+}
+function typeChar(v){if(lastResult){T=[];cur=0;lastResult=false;setExpr('');}disarm();insAt(mkB(v));render();}
+function typeOp(v){disarm();if(lastResult)lastResult=false;insAt(mkO(v));render();}
+function toggleXPow(){
+  sqrtArmed=false;setArm('sqrt-btn',false);xPowArmed=!xPowArmed;setArm('xpow-btn',xPowArmed);
+  if(xPowArmed){insAt(mkP(''));disarm();}render();
+}
+function toggleSqrt(){
+  xPowArmed=false;setArm('xpow-btn',false);sqrtArmed=!sqrtArmed;setArm('sqrt-btn',sqrtArmed);
+  if(sqrtArmed){insAt(mkS(''));disarm();}render();
+}
+function typeQuick(e){disarm();insAt(mkP(e));render();}
+function insertFrac(){disarm();if(lastResult){T=[];cur=0;lastResult=false;setExpr('');}insAt(mkF());render();}
+function navLeft(){let it=inside();if(it&&it.t==='f'&&it.foc==='bot'){it.foc='top';render();return;}if(cur>0){cur--;render();}}
+function navRight(){let it=inside();if(it&&it.t==='f'&&it.foc==='top'){it.foc='bot';render();return;}if(cur<T.length){cur++;render();}}
+function navUp(){let it=inside();if(it&&it.t==='f'){it.foc='top';render();return;}for(let i=cur-1;i>=0;i--){if(T[i].t==='f'){cur=i+1;T[i].foc='top';render();return;}}}
+function navDown(){let it=inside();if(it&&it.t==='f'){it.foc='bot';render();return;}for(let i=cur;i<T.length;i++){if(T[i].t==='f'){cur=i+1;T[i].foc='bot';render();return;}}}
+function navBack(){if(cur>0){cur--;render();}}
+function displayClick(e){if(e.target===document.getElementById('display')||e.target===document.getElementById('valarea')){cur=T.length;render();}}
+function ac(){T=[];cur=0;lastResult=false;disarm();setExpr('');render();}
+function delToken(){
+  let it=inside();
+  if(it){
+    if(it.t==='f'){if(it.foc==='top'){if(it.top){it.top=it.top.slice(0,-1);render();return;}}else{if(it.bot){it.bot=it.bot.slice(0,-1);render();return;}}}
+    if(it.t==='s'&&it.inner){it.inner=it.inner.slice(0,-1);render();return;}
+    if(it.t==='p'&&it.exp){it.exp=it.exp.slice(0,-1);render();return;}
+  }
+  if(cur>0){let t=T[cur-1];if(t.t==='n'&&t.v.length>1){t.v=t.v.slice(0,-1);}else{T.splice(cur-1,1);cur--;}render();}
+}
+function copyVal(e){
+  e.stopPropagation();
+  let txt=lastResult?T.map(t=>t.t==='n'?t.v:'').join(''):T.map(t=>{
+    if(t.t==='n'||t.t==='o'||t.t==='b')return t.v;
+    if(t.t==='f')return'('+t.top+'/'+t.bot+')';
+    if(t.t==='s')return'sqrt('+t.inner+')';
+    if(t.t==='p')return'^'+t.exp;return'';
+  }).join('');
+  navigator.clipboard.writeText(txt).then(()=>{
+    let b=document.getElementById('copy-btn'),prev=b.innerHTML;
+    b.innerHTML='<svg width="13" height="11" viewBox="0 0 13 11" fill="none"><polyline points="1,6 5,10 12,1" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>';
+    setTimeout(()=>{b.innerHTML=prev;},1100);
+  }).catch(()=>{});
+}
+function tokStr(){
+  let s='';
+  for(let t of T){
+    if(t.t==='n')s+=t.v;else if(t.t==='o')s+=t.v;else if(t.t==='b')s+=t.v;
+    else if(t.t==='f'){let d=parseFloat(t.bot||'1');if(!d)return null;s+='('+t.top+'/'+t.bot+')';}
+    else if(t.t==='s')s+='Math.sqrt('+(t.inner||'0')+')';
+    else if(t.t==='p')s+='**'+(t.exp||'0');
+  }
+  return s;
+}
+function calculate(){
+  if(!T.length)return;
+  let e=tokStr();
+  if(e===null){document.getElementById('valarea').innerHTML='<span style="color:var(--color-text-danger)">Error: ÷0</span>';return;}
+  e=e.replace(/\u00d7/g,'*').replace(/\u00f7/g,'/').replace(/\u2212/g,'-');
+  let op=(e.match(/\(/g)||[]).length,cl=(e.match(/\)/g)||[]).length;
+  for(let i=0;i<op-cl;i++)e+=')';
+  try{
+    let r=Function('"use strict";return('+e+')')();
+    if(!isFinite(r)){document.getElementById('valarea').innerHTML='<span style="color:var(--color-text-danger)">Error</span>';return;}
+    let d=+r.toFixed(10)+'';
+    setExpr(e.replace(/Math\.sqrt/g,'√').replace(/\*\*/g,'^').replace(/\*/g,'×').replace(/\//g,'÷')+' =');
+    T=[mkN(d)];cur=1;lastResult=true;render();
+  }catch{document.getElementById('valarea').innerHTML='<span style="color:var(--color-text-danger)">Error</span>';}
+}
+render();
+</script>
