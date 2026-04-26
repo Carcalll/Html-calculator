@@ -1,10 +1,45 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
 <style>
+:root {
+  --color-background-primary: #1e1e1e;
+  --color-background-secondary: #2a2a2a;
+  --color-background-danger: #3a1a1a;
+  --color-background-warning: #3a2a10;
+  --color-background-info: #1a2a3a;
+  --color-text-primary: #e8e8e8;
+  --color-text-secondary: #999999;
+  --color-text-danger: #ff6b6b;
+  --color-text-warning: #ffaa44;
+  --color-text-info: #66aaff;
+  --color-border-primary: #444444;
+  --color-border-secondary: #383838;
+  --color-border-tertiary: #303030;
+  --color-border-danger: #6b2222;
+  --color-border-warning: #6b4400;
+  --color-border-info: #225588;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --border-radius-lg: 12px;
+  --border-radius-md: 6px;
+}
+
+body {
+  background: #121212;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 .cw{max-width:320px;margin:1rem auto;font-family:var(--font-sans);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px;background:var(--color-background-primary)}
 .display{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:8px 12px;margin-bottom:8px;min-height:96px;cursor:pointer;user-select:none;overflow:hidden;position:relative}
 .copy-btn{position:absolute;top:7px;left:8px;background:none;border:none;cursor:pointer;color:var(--color-text-secondary);padding:2px;display:flex;align-items:center;border-radius:4px}
-.copy-btn:hover{color:var(--color-text-primary);background:rgba(0,0,0,0.06)}
+.copy-btn:hover{color:var(--color-text-primary);background:rgba(255,255,255,0.06)}
 .expr-line{font-size:11px;color:var(--color-text-secondary);min-height:15px;word-break:break-all;text-align:right;margin-bottom:4px}
 .val-wrap{min-height:60px;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:2px;font-size:28px;font-weight:500;color:var(--color-text-primary)}
 .tok-frac{display:inline-flex;flex-direction:column;align-items:center;gap:1px;vertical-align:middle;margin:0 2px}
@@ -28,17 +63,6 @@
 .navextra{height:26px;border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;padding:0 7px}
 .navextra:hover{color:var(--color-text-primary);background:var(--color-background-secondary)}
 .nav-sep{width:1px;height:18px;background:var(--color-border-tertiary);margin:0 1px}
-
-/*
-  5 cols, GAP=5px, row height=48px
-  Layout:
-  R1: AC   DEL   √    x□   x²
-  R2: a/b  (     )    ÷[c2]         ← ÷ spans cols 4-5
-  R3: 7    8     9    ×[c2]         ← × spans cols 4-5
-  R4: 4    5     6    +[r2,c1]  −[r2,c1]  ← + col4 r4-5, − col5 r4-5
-  R5: 1    2     3    (+ cont)  (− cont)
-  R6: 0[c2]      .    =[c2]         ← = spans cols 4-5
-*/
 .grid{
   display:grid;
   grid-template-columns:repeat(5,1fr);
@@ -68,6 +92,8 @@
 .xl{display:inline-flex;align-items:flex-start;gap:1px;line-height:1}
 .xl sup{font-size:9px;line-height:12px;margin-top:1px}
 </style>
+</head>
+<body>
 
 <div class="cw">
   <div class="display" id="display" onclick="displayClick(event)">
@@ -96,14 +122,12 @@
   </div>
 
   <div class="grid">
-    <!-- R1: AC  DEL  √  x□  x² -->
     <button class="btn clr"    onclick="ac()">AC</button>
     <button class="btn del-btn" onclick="delToken()">⌫</button>
     <button class="btn op" id="sqrt-btn" onclick="toggleSqrt()">&#8730;</button>
     <button class="btn op" id="xpow-btn" onclick="toggleXPow()"><span class="xl">x<sup>&#9633;</sup></span></button>
     <button class="btn op" onclick="typeQuick('2')"><span class="xl">x<sup>2</sup></span></button>
 
-    <!-- R2: a/b  (  )  ÷ [spans cols 4-5] -->
     <button class="btn op" onclick="insertFrac()">
       <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
         <rect x="2" y="1" width="8" height="7" rx="1.2" stroke="currentColor" stroke-width="1.2"/>
@@ -113,31 +137,23 @@
     </button>
     <button class="btn op" onclick="typeChar('(')">(</button>
     <button class="btn op" onclick="typeChar(')')">)</button>
-    <!-- ÷ wide: cols 4-5, row 2 -->
     <button class="btn opr" style="grid-column:4/6;grid-row:2" onclick="typeOp('\u00f7')">&divide;</button>
 
-    <!-- R3: 7  8  9  × [spans cols 4-5] -->
     <button class="btn" onclick="typeDigit('7')">7</button>
     <button class="btn" onclick="typeDigit('8')">8</button>
     <button class="btn" onclick="typeDigit('9')">9</button>
-    <!-- × wide: cols 4-5, row 3 -->
     <button class="btn opr" style="grid-column:4/6;grid-row:3" onclick="typeOp('\u00d7')">&times;</button>
 
-    <!-- R4-5: 4 5 6 then 1 2 3  |  + tall col4 rows 4-5  |  − tall col5 rows 4-5 -->
     <button class="btn" onclick="typeDigit('4')">4</button>
     <button class="btn" onclick="typeDigit('5')">5</button>
     <button class="btn" onclick="typeDigit('6')">6</button>
-    <!-- + tall: col4, rows 4-5 -->
     <button class="btn opr" style="grid-column:4;grid-row:4/6" onclick="typeOp('+')">+</button>
-    <!-- − tall: col5, rows 4-5 -->
     <button class="btn opr" style="grid-column:5;grid-row:4/6" onclick="typeOp('\u2212')">&minus;</button>
 
-    <!-- R5 cols 1-3: 1 2 3 (cols 4-5 occupied by +/−) -->
     <button class="btn" onclick="typeDigit('1')">1</button>
     <button class="btn" onclick="typeDigit('2')">2</button>
     <button class="btn" onclick="typeDigit('3')">3</button>
 
-    <!-- R6: 0[c1-2]  .[c3]  =[c4-5] -->
     <button class="btn" style="grid-column:1/3;grid-row:6" onclick="typeDigit('0')">0</button>
     <button class="btn" style="grid-column:3;grid-row:6" onclick="typeDigit('.')">.</button>
     <button class="btn eq" style="grid-column:4/6;grid-row:6" onclick="calculate()">=</button>
@@ -268,3 +284,5 @@ function calculate(){
 }
 render();
 </script>
+</body>
+</html>
